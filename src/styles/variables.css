@@ -1,0 +1,19 @@
+:root {
+  --bg-primary: #0f1419;
+  --bg-secondary: #1a2332;
+  --bg-tertiary: #243044;
+  --bg-card: #1e2a3a;
+  --text-primary: #e7edf4;
+  --text-secondary: #8899a6;
+  --text-muted: #5c6e7e;
+  --accent-blue: #1d9bf0;
+  --accent-green: #00ba7c;
+  --accent-orange: #ff7a00;
+  --accent-red: #f4212e;
+  --accent-purple: #7856ff;
+  --accent-yellow: #ffd400;
+  --border-color: #2f3b4a;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --radius: 8px;
+  --radius-sm: 4px;
+}

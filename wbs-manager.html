@@ -1,0 +1,2227 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WBS Manager</title>
+    <style>
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a2332;
+            --bg-tertiary: #243044;
+            --bg-card: #1e2a3a;
+            --text-primary: #e7edf4;
+            --text-secondary: #8899a6;
+            --text-muted: #5c6e7e;
+            --accent-blue: #1d9bf0;
+            --accent-green: #00ba7c;
+            --accent-orange: #ff7a00;
+            --accent-red: #f4212e;
+            --accent-purple: #7856ff;
+            --accent-yellow: #ffd400;
+            --border-color: #2f3b4a;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            --radius: 8px;
+            --radius-sm: 4px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .project-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .project-selector select {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .status-dot.connected {
+            background: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+        }
+
+        .user-name {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 57px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Content Area */
+        .content {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1a8cd8;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card);
+        }
+
+        .btn-icon {
+            padding: 8px;
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+        }
+
+        .btn-icon:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow: auto;
+            box-shadow: var(--shadow);
+            transform: translateY(-20px);
+            transition: transform 0.2s;
+        }
+
+        .modal-overlay.show .modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-label.required::after {
+            content: ' *';
+            color: var(--accent-red);
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-input[readonly] {
+            background-color: var(--bg-primary);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            border-color: transparent;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-checkbox input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* WBS Tree */
+        .wbs-tree {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .wbs-header {
+            display: grid;
+            grid-template-columns: minmax(300px, 1fr) 100px 80px 120px 100px 80px 60px;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .wbs-list {
+            max-height: calc(100vh - 280px);
+            overflow-y: auto;
+        }
+
+        .wbs-item {
+            display: grid;
+            grid-template-columns: minmax(300px, 1fr) 100px 80px 120px 100px 80px 60px;
+            gap: 8px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            align-items: center;
+            transition: background 0.15s;
+        }
+
+        .wbs-item:hover {
+            background: var(--bg-card);
+        }
+
+        .wbs-item.selected {
+            background: rgba(29, 155, 240, 0.1);
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .wbs-item.level-0 {
+            font-weight: 600;
+        }
+
+        .wbs-item.level-1 .wbs-name {
+            padding-left: 24px;
+        }
+
+        .wbs-item.level-2 .wbs-name {
+            padding-left: 48px;
+        }
+
+        .wbs-item.level-3 .wbs-name {
+            padding-left: 72px;
+        }
+
+        .wbs-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .wbs-toggle {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            border-radius: 4px;
+        }
+
+        .wbs-toggle:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .wbs-type-badge {
+            width: 4px;
+            height: 24px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .wbs-type-badge.deliverable {
+            background: var(--accent-blue);
+        }
+
+        .wbs-type-badge.support {
+            background: var(--accent-orange);
+        }
+
+        .wbs-type-badge.buffer {
+            background: var(--accent-purple);
+        }
+
+        .wbs-code {
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-family: 'Consolas', monospace;
+            min-width: 40px;
+        }
+
+        .wbs-title {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .wbs-title:hover {
+            color: var(--accent-blue);
+        }
+
+        .milestone-icon {
+            color: var(--accent-yellow);
+        }
+
+        .wbs-assignee {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .wbs-status {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .wbs-status.not-started {
+            background: rgba(92, 110, 126, 0.2);
+            color: var(--text-secondary);
+        }
+
+        .wbs-status.in-progress {
+            background: rgba(29, 155, 240, 0.2);
+            color: var(--accent-blue);
+        }
+
+        .wbs-status.completed {
+            background: rgba(0, 186, 124, 0.2);
+            color: var(--accent-green);
+        }
+
+        .wbs-status.on-hold {
+            background: rgba(255, 122, 0, 0.2);
+            color: var(--accent-orange);
+        }
+
+        .wbs-dates {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .wbs-dates.overdue {
+            color: var(--accent-red);
+        }
+
+        /* Progress Bar */
+        .progress-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-green);
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            min-width: 35px;
+            text-align: right;
+        }
+
+        /* Dependencies */
+        .wbs-deps {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .dep-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            background: var(--bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 4px;
+        }
+
+        /* Actions */
+        .wbs-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        .wbs-item:hover .wbs-actions {
+            opacity: 1;
+        }
+
+        /* Gantt Chart */
+        .gantt-container {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .gantt-header {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .gantt-labels {
+            width: 250px;
+            flex-shrink: 0;
+            background: var(--bg-tertiary);
+        }
+
+        .gantt-timeline {
+            flex: 1;
+            overflow-x: auto;
+        }
+
+        .gantt-dates {
+            display: flex;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .gantt-date {
+            min-width: 40px;
+            padding: 8px 4px;
+            text-align: center;
+            font-size: 10px;
+            color: var(--text-secondary);
+            border-right: 1px solid var(--border-color);
+        }
+
+        .gantt-date.weekend {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .gantt-date.today {
+            background: rgba(29, 155, 240, 0.2);
+            color: var(--accent-blue);
+        }
+
+        .gantt-rows {
+            display: flex;
+        }
+
+        .gantt-row-labels {
+            width: 250px;
+            flex-shrink: 0;
+        }
+
+        .gantt-row-label {
+            height: 36px;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .gantt-row-bars {
+            flex: 1;
+        }
+
+        .gantt-row {
+            height: 36px;
+            position: relative;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .gantt-bar {
+            position: absolute;
+            top: 6px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            font-size: 11px;
+            color: white;
+            cursor: pointer;
+            transition: filter 0.15s;
+        }
+
+        .gantt-bar:hover {
+            filter: brightness(1.1);
+        }
+
+        .gantt-bar.deliverable {
+            background: var(--accent-blue);
+        }
+
+        .gantt-bar.support {
+            background: var(--accent-orange);
+        }
+
+        .gantt-bar.buffer {
+            background: var(--accent-purple);
+        }
+
+        .gantt-bar .progress-overlay {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px 0 0 4px;
+        }
+
+        .gantt-milestone {
+            position: absolute;
+            top: 10px;
+            width: 16px;
+            height: 16px;
+            background: var(--accent-yellow);
+            transform: rotate(45deg);
+            cursor: pointer;
+        }
+
+        .gantt-dependency-line {
+            position: absolute;
+            pointer-events: none;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-title {
+            font-size: 18px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .empty-state-desc {
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        /* Context Menu */
+        .context-menu {
+            position: fixed;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow);
+            min-width: 160px;
+            z-index: 1001;
+            display: none;
+        }
+
+        .context-menu.show {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 10px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .context-menu-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .context-menu-item.danger {
+            color: var(--accent-red);
+        }
+
+        .context-menu-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 4px 0;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1002;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
+            border-left: 3px solid var(--accent-green);
+        }
+
+        .toast.error {
+            border-left: 3px solid var(--accent-red);
+        }
+
+        .toast.info {
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Initial Setup */
+        .setup-container {
+            max-width: 500px;
+            margin: 100px auto;
+            padding: 40px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            text-align: center;
+        }
+
+        .setup-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .setup-title {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .setup-desc {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .setup-steps {
+            text-align: left;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+        }
+
+        .setup-step {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .setup-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .setup-step-num {
+            width: 24px;
+            height: 24px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar Widgets Addon */
+        .view-tabs {
+            display: flex;
+            padding: 12px 16px;
+            gap: 4px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .view-tab {
+            flex: 1;
+            padding: 8px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s;
+        }
+
+        .view-tab:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .view-tab.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .legend {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .legend-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        .legend-color.deliverable {
+            background: var(--accent-blue);
+        }
+
+        .legend-color.support {
+            background: var(--accent-orange);
+        }
+
+        .legend-color.buffer {
+            background: var(--accent-purple);
+        }
+
+        .legend-color.milestone {
+            background: var(--accent-yellow);
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .summary-card {
+            background: var(--bg-tertiary);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+        }
+
+        .summary-card .value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .summary-card .label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .summary-card.progress .value {
+            color: var(--accent-green);
+        }
+
+        .summary-card.delayed .value {
+            color: var(--accent-red);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Initial Setup Screen -->
+    <div id="setupScreen" class="setup-container">
+        <div class="setup-icon">📊</div>
+        <h1 class="setup-title">WBS Manager</h1>
+        <p class="setup-desc">プロジェクトのWBS管理を始めましょう</p>
+
+        <div class="setup-steps">
+            <div class="setup-step">
+                <span class="setup-step-num">1</span>
+                <span>共有フォルダ内にプロジェクト用フォルダを作成</span>
+            </div>
+            <div class="setup-step">
+                <span class="setup-step-num">2</span>
+                <span>下のボタンでフォルダを選択</span>
+            </div>
+            <div class="setup-step">
+                <span class="setup-step-num">3</span>
+                <span>ユーザー名を入力してスタート</span>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px; text-align: left;">
+            <label class="form-label required">ユーザー名</label>
+            <input type="text" id="setupUserName" class="form-input" placeholder="例：山田太郎">
+        </div>
+
+        <button class="btn btn-primary" onclick="window.app.selectProjectFolder()" style="width: 100%;">
+            📁 プロジェクトフォルダを開く
+        </button>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" style="display: none;">
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <div class="logo-icon">📊</div>
+                    WBS Manager
+                </div>
+                <div class="project-selector">
+                    <select id="projectSelect" onchange="window.app.switchProject()">
+                        <option value="">プロジェクトを選択</option>
+                    </select>
+                    <button class="btn btn-secondary btn-small" onclick="window.app.showNewProjectModal()">+ 新規</button>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="connection-status">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">未接続</span>
+                </div>
+                <button class="btn-icon" onclick="window.app.reloadData()" title="再読み込み">🔄</button>
+                <input type="text" class="user-name" id="userName" placeholder="ユーザー名"
+                    onchange="window.app.saveUserName()">
+                <button class="btn btn-secondary btn-small" onclick="window.app.selectProjectFolder()">📁
+                    フォルダ変更</button>
+            </div>
+        </header>
+
+        <div class="main-container">
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-title">サマリー</div>
+                    <div class="summary-cards">
+                        <div class="summary-card progress">
+                            <div class="value" id="totalProgress">0%</div>
+                            <div class="label">全体進捗</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="value" id="totalItems">0</div>
+                            <div class="label">WBS項目</div>
+                        </div>
+                        <div class="summary-card delayed">
+                            <div class="value" id="delayedItems">0</div>
+                            <div class="label">遅延</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="value" id="completedItems">0</div>
+                            <div class="label">完了</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-tabs">
+                    <button class="view-tab active" data-view="tree" onclick="window.app.switchView('tree')">📋
+                        ツリー</button>
+                    <button class="view-tab" data-view="gantt" onclick="window.app.switchView('gantt')">📊 ガント</button>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-title">凡例</div>
+                    <div class="legend-items">
+                        <div class="legend-item">
+                            <div class="legend-color deliverable"></div>
+                            <span>成果物</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color support"></div>
+                            <span>運用・サポート</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color buffer"></div>
+                            <span>バッファ</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color milestone"></div>
+                            <span>マイルストーン</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="content">
+                <div class="toolbar">
+                    <div class="toolbar-left">
+                        <button class="btn btn-primary" onclick="window.app.showAddWbsModal()">+ WBS追加</button>
+                        <button class="btn btn-secondary" onclick="window.app.showAddWbsModal(null, 'support')">+
+                            運用枠追加</button>
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="btn btn-secondary btn-small" onclick="window.app.expandAll()">全展開</button>
+                        <button class="btn btn-secondary btn-small" onclick="window.app.collapseAll()">全折畳</button>
+                    </div>
+                </div>
+
+                <!-- Tree View -->
+                <div id="treeView" class="wbs-tree">
+                    <div class="wbs-header">
+                        <span>WBS名</span>
+                        <span>担当者</span>
+                        <span>ステータス</span>
+                        <span>期間</span>
+                        <span>進捗</span>
+                        <span>依存</span>
+                        <span></span>
+                    </div>
+                    <div class="wbs-list" id="wbsList">
+                        <div class="empty-state" id="emptyState">
+                            <div class="empty-state-icon">📋</div>
+                            <div class="empty-state-title">WBSがありません</div>
+                            <div class="empty-state-desc">「+ WBS追加」ボタンでWBSを作成してください</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gantt View -->
+                <div id="ganttView" class="gantt-container" style="display: none;">
+                    <div id="ganttChart"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Add/Edit WBS Modal -->
+    <div class="modal-overlay" id="wbsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="wbsModalTitle">WBS追加</h2>
+                <button class="modal-close" onclick="window.app.closeWbsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label required">WBSコード（自動採番）</label>
+                        <input type="text" id="wbsCode" class="form-input" placeholder="例: 1.1" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required">種別</label>
+                        <select id="wbsType" class="form-select">
+                            <option value="deliverable">成果物</option>
+                            <option value="support">運用・サポート</option>
+                            <option value="buffer">バッファ</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">名称</label>
+                    <input type="text" id="wbsName" class="form-input" placeholder="例: 要件定義">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">親WBSコード</label>
+                        <select id="wbsParent" class="form-select" onchange="window.app.handleParentChange()">
+                            <option value="">なし（最上位）</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">担当者</label>
+                        <input type="text" id="wbsAssignee" class="form-input" placeholder="例: 山田">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">予定開始日</label>
+                        <input type="date" id="wbsStartDate" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">予定終了日</label>
+                        <input type="date" id="wbsEndDate" class="form-input">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">予定工数（人日）</label>
+                        <input type="number" id="wbsEffort" class="form-input" placeholder="例: 5" min="0" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">進捗（%）</label>
+                        <input type="number" id="wbsProgress" class="form-input" placeholder="0" min="0" max="100">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">依存関係（先行WBS）</label>
+                    <select id="wbsDependencies" class="form-select" multiple style="height: 80px;">
+                    </select>
+                    <small style="color: var(--text-secondary); font-size: 11px;">Ctrl+クリックで複数選択</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" id="wbsMilestone">
+                        <span>マイルストーンとして表示</span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">メモ</label>
+                    <textarea id="wbsNote" class="form-textarea" placeholder="備考やメモを入力"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="window.app.closeWbsModal()">キャンセル</button>
+                <button class="btn btn-primary" onclick="window.app.saveWbs()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Project Modal -->
+    <div class="modal-overlay" id="projectModal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">新規プロジェクト</h2>
+                <button class="modal-close" onclick="window.app.closeProjectModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label required">プロジェクトID</label>
+                    <input type="text" id="projectId" class="form-input" placeholder="例: project_2024">
+                    <small style="color: var(--text-secondary); font-size: 11px;">英数字とアンダースコアのみ</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label required">プロジェクト名</label>
+                    <input type="text" id="projectName" class="form-input" placeholder="例: 新規システム開発">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">説明</label>
+                    <textarea id="projectDesc" class="form-textarea" placeholder="プロジェクトの概要"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="window.app.closeProjectModal()">キャンセル</button>
+                <button class="btn btn-primary" onclick="window.app.createProject()">作成</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" onclick="window.app.contextMenuAction('edit')">✏️ 編集</div>
+        <div class="context-menu-item" onclick="window.app.contextMenuAction('addChild')">➕ 子WBS追加</div>
+        <div class="context-menu-item" onclick="window.app.contextMenuAction('duplicate')">📋 複製</div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item danger" onclick="window.app.contextMenuAction('delete')">🗑️ 削除</div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+
+        /* --- js/state.js --- */
+        const state = {
+            directoryHandle: null,
+            currentProject: null,
+            projects: [],
+            wbsItems: [],
+            expandedNodes: new Set(),
+            editingWbsId: null,
+            contextMenuTarget: null,
+            currentView: 'tree',
+            autoReloadInterval: null
+        };
+
+        function updateState(newState) {
+            Object.assign(state, newState);
+        }
+
+
+        /* --- js/utils/dom.js --- */
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[char]));
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+
+        /* --- js/utils/date.js --- */
+        function formatDateRange(start, end) {
+            if (!start && !end) return '-';
+            const formatDate = d => d ? new Date(d).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' }) : '';
+            return `${formatDate(start)} - ${formatDate(end)}`;
+        }
+
+
+        /* --- js/storage.js --- */
+
+
+
+        async function selectProjectFolder() {
+            try {
+                const handle = await window.showDirectoryPicker({
+                    mode: 'readwrite'
+                });
+                updateState({ directoryHandle: handle });
+                return handle;
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error(err);
+                    showToast('フォルダの選択に失敗しました', 'error');
+                }
+                throw err;
+            }
+        }
+
+        async function loadProjects() {
+            const projects = [];
+            try {
+                for await (const entry of state.directoryHandle.values()) {
+                    if (entry.kind === 'directory') {
+                        try {
+                            const projectDir = await state.directoryHandle.getDirectoryHandle(entry.name);
+                            const projectFile = await projectDir.getFileHandle('project.json');
+                            const file = await projectFile.getFile();
+                            const content = await file.text();
+                            const project = JSON.parse(content);
+                            projects.push(project);
+                        } catch (e) {
+                            // project.jsonがなければスキップ
+                        }
+                    }
+                }
+                updateState({ projects });
+                return projects;
+            } catch (err) {
+                console.error('Load projects error:', err);
+                throw err;
+            }
+        }
+
+        async function loadWbsItems() {
+            if (!state.currentProject) return [];
+
+            const wbsItems = [];
+            try {
+                const projectDir = await state.directoryHandle.getDirectoryHandle(state.currentProject.id);
+                const wbsDir = await projectDir.getDirectoryHandle('wbs');
+
+                for await (const entry of wbsDir.values()) {
+                    if (entry.kind === 'file' && entry.name.endsWith('.json')) {
+                        const file = await entry.getFile();
+                        const content = await file.text();
+                        const wbs = JSON.parse(content);
+                        wbsItems.push(wbs);
+                    }
+                }
+
+                // コードでソート
+                wbsItems.sort((a, b) => compareWbsCode(a.code, b.code));
+                updateState({ wbsItems });
+                return wbsItems;
+            } catch (err) {
+                console.error('Load WBS error:', err);
+                showToast('WBSの読み込みに失敗しました', 'error');
+                throw err;
+            }
+        }
+
+        function compareWbsCode(a, b) {
+            const partsA = a.split('.').map(Number);
+            const partsB = b.split('.').map(Number);
+
+            for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+                const numA = partsA[i] || 0;
+                const numB = partsB[i] || 0;
+                if (numA !== numB) return numA - numB;
+            }
+            return 0;
+        }
+
+        async function saveWbs(wbs) {
+            try {
+                const projectDir = await state.directoryHandle.getDirectoryHandle(state.currentProject.id);
+                const wbsDir = await projectDir.getDirectoryHandle('wbs');
+                const fileName = `${wbs.id}.json`;
+                const fileHandle = await wbsDir.getFileHandle(fileName, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(JSON.stringify(wbs, null, 2));
+                await writable.close();
+                showToast(wbs.id.startsWith('wbs_') ? 'WBSを更新しました' : 'WBSを追加しました', 'success');
+            } catch (err) {
+                console.error('Save WBS error:', err);
+                showToast('WBSの保存に失敗しました', 'error');
+                throw err;
+            }
+        }
+
+        async function deleteWbs(wbsId) {
+            try {
+                const projectDir = await state.directoryHandle.getDirectoryHandle(state.currentProject.id);
+                const wbsDir = await projectDir.getDirectoryHandle('wbs');
+                await wbsDir.removeEntry(`${wbsId}.json`);
+                showToast('WBSを削除しました', 'success');
+            } catch (err) {
+                console.error('Delete WBS error:', err);
+                showToast('WBSの削除に失敗しました', 'error');
+                throw err;
+            }
+        }
+
+        async function createProject(project) {
+            try {
+                const projectDir = await state.directoryHandle.getDirectoryHandle(project.id, { create: true });
+                await projectDir.getDirectoryHandle('wbs', { create: true });
+
+                const projectFile = await projectDir.getFileHandle('project.json', { create: true });
+                const writable = await projectFile.createWritable();
+                await writable.write(JSON.stringify(project, null, 2));
+                await writable.close();
+                return project;
+            } catch (err) {
+                console.error('Create project error:', err);
+                throw err;
+            }
+        }
+
+
+        /* --- js/ui/tree.js --- */
+
+
+
+
+        function renderWbsTree() {
+            const container = document.getElementById('wbsList');
+            const emptyState = document.getElementById('emptyState');
+
+            if (state.wbsItems.length === 0) {
+                container.innerHTML = '';
+                if (emptyState) {
+                    container.appendChild(emptyState);
+                    emptyState.style.display = 'block';
+                }
+                return;
+            }
+
+            if (emptyState) emptyState.style.display = 'none';
+
+            const tree = buildTree();
+            container.innerHTML = renderTreeNodes(tree);
+        }
+
+        function buildTree() {
+            const map = new Map();
+            const roots = [];
+
+            state.wbsItems.forEach(w => {
+                map.set(w.code, { ...w, children: [] });
+            });
+
+            state.wbsItems.forEach(w => {
+                const node = map.get(w.code);
+                if (w.parentCode && map.has(w.parentCode)) {
+                    map.get(w.parentCode).children.push(node);
+                } else {
+                    roots.push(node);
+                }
+            });
+
+            return roots;
+        }
+
+        function renderTreeNodes(nodes, level = 0) {
+            let html = '';
+
+            nodes.forEach(node => {
+                const hasChildren = node.children && node.children.length > 0;
+                const isExpanded = state.expandedNodes.has(node.code);
+                const isOverdue = node.plannedEnd && new Date(node.plannedEnd) < new Date() && node.status !== 'completed';
+
+                html += `
+      <div class="wbs-item level-${level}" data-id="${node.id}" data-code="${node.code}"
+           oncontextmenu="window.app.showContextMenu(event, '${node.id}')">
+        <div class="wbs-name">
+          ${hasChildren ? `
+            <span class="wbs-toggle" onclick="window.app.toggleNode('${node.code}')">
+              ${isExpanded ? '▼' : '▶'}
+            </span>
+          ` : '<span style="width: 20px;"></span>'}
+          <span class="wbs-type-badge ${node.type}"></span>
+          <span class="wbs-code">${node.code}</span>
+          <span class="wbs-title" onclick="window.app.showEditWbsModal('${node.id}')">
+            ${node.milestone ? '<span class="milestone-icon">◆</span>' : ''}
+            ${escapeHtml(node.name)}
+          </span>
+        </div>
+        <div class="wbs-assignee">${escapeHtml(node.assignee || '-')}</div>
+        <div class="wbs-status ${node.status}">${getStatusLabel(node.status)}</div>
+        <div class="wbs-dates ${isOverdue ? 'overdue' : ''}">
+          ${formatDateRange(node.plannedStart, node.plannedEnd)}
+        </div>
+        <div class="progress-cell">
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: ${node.progress}%"></div>
+          </div>
+          <span class="progress-text">${node.progress}%</span>
+        </div>
+        <div class="wbs-deps">
+          ${node.dependencies?.map(d => `<span class="dep-badge">→${d}</span>`).join('') || '-'}
+        </div>
+        <div class="wbs-actions">
+          <button class="btn-icon btn-small" onclick="window.app.showEditWbsModal('${node.id}')" title="編集">✏️</button>
+          <button class="btn-icon btn-small" onclick="window.app.deleteWbs('${node.id}')" title="削除">🗑️</button>
+        </div>
+      </div>
+    `;
+
+                if (hasChildren && isExpanded) {
+                    html += renderTreeNodes(node.children, level + 1);
+                }
+            });
+
+            return html;
+        }
+
+        function getStatusLabel(status) {
+            const labels = {
+                'not-started': '未着手',
+                'in-progress': '進行中',
+                'completed': '完了',
+                'on-hold': '保留'
+            };
+            return labels[status] || status;
+        }
+
+
+        /* --- js/ui/gantt.js --- */
+
+
+
+        function renderGanttChart() {
+            const container = document.getElementById('ganttChart');
+            if (!container) return;
+
+            if (state.wbsItems.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div><div class="empty-state-title">WBSがありません</div></div>';
+                return;
+            }
+
+            // 日付範囲を計算
+            const dates = state.wbsItems
+                .filter(w => w.plannedStart || w.plannedEnd)
+                .flatMap(w => [w.plannedStart, w.plannedEnd].filter(Boolean))
+                .map(d => new Date(d));
+
+            if (dates.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📅</div><div class="empty-state-title">日付が設定されていません</div></div>';
+                return;
+            }
+
+            const minDate = new Date(Math.min(...dates));
+            const maxDate = new Date(Math.max(...dates));
+
+            // 前後に余裕を持たせる
+            minDate.setDate(minDate.getDate() - 7);
+            maxDate.setDate(maxDate.getDate() + 7);
+
+            const dayCount = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24));
+            const dayWidth = 40;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // ヘッダー（日付）
+            let datesHtml = '';
+            for (let i = 0; i < dayCount; i++) {
+                const date = new Date(minDate);
+                date.setDate(date.getDate() + i);
+                const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                const isToday = date.getTime() === today.getTime();
+
+                datesHtml += `
+      <div class="gantt-date ${isWeekend ? 'weekend' : ''} ${isToday ? 'today' : ''}">
+        ${date.getDate()}
+      </div>
+    `;
+            }
+
+            // 行（WBSごと）
+            let labelsHtml = '';
+            let barsHtml = '';
+
+            state.wbsItems.forEach(w => {
+                const indent = '　'.repeat(w.level || 0);
+                labelsHtml += `
+      <div class="gantt-row-label">
+        <span class="wbs-type-badge ${w.type}" style="width: 3px; height: 16px;"></span>
+        <span>${indent}${w.code} ${escapeHtml(w.name)}</span>
+      </div>
+    `;
+
+                let barHtml = '';
+                if (w.plannedStart && w.plannedEnd) {
+                    const start = new Date(w.plannedStart);
+                    const end = new Date(w.plannedEnd);
+                    const startOffset = Math.floor((start - minDate) / (1000 * 60 * 60 * 24));
+                    const duration = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+                    if (w.milestone) {
+                        barHtml = `<div class="gantt-milestone" style="left: ${startOffset * dayWidth + dayWidth / 2 - 8}px;"></div>`;
+                    } else {
+                        barHtml = `
+          <div class="gantt-bar ${w.type}" style="left: ${startOffset * dayWidth}px; width: ${duration * dayWidth - 4}px;">
+            <div class="progress-overlay" style="width: ${w.progress}%;"></div>
+            <span style="position: relative; z-index: 1;">${w.progress}%</span>
+          </div>
+        `;
+                    }
+                }
+
+                barsHtml += `<div class="gantt-row">${barHtml}</div>`;
+            });
+
+            container.innerHTML = `
+    <div class="gantt-header">
+      <div class="gantt-labels" style="padding: 8px 12px; font-size: 11px; color: var(--text-secondary);">
+        WBS
+      </div>
+      <div class="gantt-timeline">
+        <div class="gantt-dates" style="width: ${dayCount * dayWidth}px;">
+          ${datesHtml}
+        </div>
+      </div>
+    </div>
+    <div class="gantt-rows">
+      <div class="gantt-row-labels">
+        ${labelsHtml}
+      </div>
+      <div class="gantt-row-bars" style="overflow-x: auto;">
+        <div style="width: ${dayCount * dayWidth}px;">
+          ${barsHtml}
+        </div>
+      </div>
+    </div>
+  `;
+        }
+
+
+        /* --- js/ui/modals.js --- */
+
+
+        function showNewProjectModal() {
+            document.getElementById('projectId').value = '';
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectDesc').value = '';
+            document.getElementById('projectModal').classList.add('show');
+        }
+
+        function closeProjectModal() {
+            document.getElementById('projectModal').classList.remove('show');
+        }
+
+        function showAddWbsModal(parentCode = null, defaultType = 'deliverable') {
+            updateState({ editingWbsId: null });
+            document.getElementById('wbsModalTitle').textContent = 'WBS追加';
+
+            // フォームリセット
+            document.getElementById('wbsCode').value = parentCode ? window.app.getNextChildCode(parentCode) : window.app.getNextTopCode();
+            document.getElementById('wbsType').value = defaultType;
+            document.getElementById('wbsName').value = '';
+            document.getElementById('wbsAssignee').value = '';
+            document.getElementById('wbsStartDate').value = '';
+            document.getElementById('wbsEndDate').value = '';
+            document.getElementById('wbsEffort').value = '';
+            document.getElementById('wbsProgress').value = '0';
+            document.getElementById('wbsMilestone').checked = false;
+            document.getElementById('wbsNote').value = '';
+
+            window.app.updateParentSelect(parentCode);
+            window.app.updateDependenciesSelect();
+
+            document.getElementById('wbsModal').classList.add('show');
+        }
+
+        function showEditWbsModal(wbsId) {
+            const wbs = state.wbsItems.find(w => w.id === wbsId);
+            if (!wbs) return;
+
+            updateState({ editingWbsId: wbsId });
+            document.getElementById('wbsModalTitle').textContent = 'WBS編集';
+
+            document.getElementById('wbsCode').value = wbs.code;
+            document.getElementById('wbsType').value = wbs.type;
+            document.getElementById('wbsName').value = wbs.name;
+            document.getElementById('wbsAssignee').value = wbs.assignee || '';
+            document.getElementById('wbsStartDate').value = wbs.plannedStart || '';
+            document.getElementById('wbsEndDate').value = wbs.plannedEnd || '';
+            document.getElementById('wbsEffort').value = wbs.plannedEffort || '';
+            document.getElementById('wbsProgress').value = wbs.progress || 0;
+            document.getElementById('wbsMilestone').checked = wbs.milestone || false;
+            document.getElementById('wbsNote').value = wbs.note || '';
+
+            window.app.updateParentSelect(wbs.parentCode);
+            window.app.updateDependenciesSelect(wbs.dependencies);
+
+            document.getElementById('wbsModal').classList.add('show');
+        }
+
+        function closeWbsModal() {
+            document.getElementById('wbsModal').classList.remove('show');
+            updateState({ editingWbsId: null });
+        }
+
+
+        /* --- main.js --- */
+
+
+
+
+
+
+
+        // Global Exposure for HTML Event Handlers
+        window.app = {
+            selectProjectFolder: async () => {
+                await selectProjectFolder();
+                const userName = document.getElementById('setupUserName').value.trim() ||
+                    document.getElementById('userName').value.trim();
+                if (!userName) {
+                    showToast('ユーザー名を入力してください', 'error');
+                    return;
+                }
+                localStorage.setItem('wbs_userName', userName);
+                document.getElementById('userName').value = userName;
+                document.getElementById('setupScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                updateConnectionStatus(true);
+                await loadProjectsList();
+                startAutoReload();
+                showToast('フォルダに接続しました', 'success');
+            },
+            switchProject,
+            showNewProjectModal,
+            closeProjectModal,
+            createProject: handleCreateProject,
+            reloadData,
+            saveUserName,
+            switchView,
+            expandAll,
+            collapseAll,
+            showAddWbsModal,
+            showEditWbsModal,
+            closeWbsModal,
+            saveWbs: handleSaveWbs,
+            deleteWbs: handleDeleteWbs,
+            toggleNode,
+            showContextMenu,
+            contextMenuAction,
+            // Helper for modals
+            getNextTopCode,
+            getNextChildCode,
+            updateParentSelect,
+            updateDependenciesSelect,
+            handleParentChange
+        };
+
+        function handleParentChange() {
+            // 親選択変更時は、編集モードかどうかに関わらず新しいコードを提案する
+            const parentCode = document.getElementById('wbsParent').value;
+            const codeInput = document.getElementById('wbsCode');
+
+            if (parentCode) {
+                codeInput.value = getNextChildCode(parentCode);
+            } else {
+                codeInput.value = getNextTopCode();
+            }
+        }
+
+        async function loadProjectsList() {
+            await loadProjects();
+            const select = document.getElementById('projectSelect');
+            select.innerHTML = '<option value="">プロジェクトを選択</option>';
+            state.projects.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = p.name;
+                select.appendChild(option);
+            });
+
+            const lastProject = localStorage.getItem('wbs_lastProject');
+            if (lastProject && state.projects.find(p => p.id === lastProject)) {
+                select.value = lastProject;
+                await switchProject();
+            }
+        }
+
+        async function switchProject() {
+            const select = document.getElementById('projectSelect');
+            const projectId = select.value;
+
+            if (!projectId) {
+                updateState({ currentProject: null, wbsItems: [] });
+                renderWbsTree();
+                return;
+            }
+
+            const currentProject = state.projects.find(p => p.id === projectId);
+            updateState({ currentProject });
+            localStorage.setItem('wbs_lastProject', projectId);
+
+            await loadWbsItems();
+            updateSummary();
+            renderWbsTree();
+        }
+
+        async function handleCreateProject() {
+            const id = document.getElementById('projectId').value.trim();
+            const name = document.getElementById('projectName').value.trim();
+            const desc = document.getElementById('projectDesc').value.trim();
+
+            if (!id || !name) {
+                showToast('プロジェクトIDと名前は必須です', 'error');
+                return;
+            }
+
+            const project = {
+                id,
+                name,
+                description: desc,
+                createdAt: new Date().toISOString(),
+                createdBy: document.getElementById('userName').value.trim()
+            };
+
+            await createProject(project);
+            closeProjectModal();
+            await loadProjectsList();
+            document.getElementById('projectSelect').value = id;
+            await switchProject();
+            showToast('プロジェクトを作成しました', 'success');
+        }
+
+        async function handleSaveWbs() {
+            const code = document.getElementById('wbsCode').value.trim();
+            const name = document.getElementById('wbsName').value.trim();
+            const type = document.getElementById('wbsType').value;
+            const parentCode = document.getElementById('wbsParent').value;
+            const assignee = document.getElementById('wbsAssignee').value.trim();
+            const startDate = document.getElementById('wbsStartDate').value;
+            const endDate = document.getElementById('wbsEndDate').value;
+            const effort = parseFloat(document.getElementById('wbsEffort').value) || 0;
+            const progress = parseInt(document.getElementById('wbsProgress').value) || 0;
+            const milestone = document.getElementById('wbsMilestone').checked;
+            const note = document.getElementById('wbsNote').value.trim();
+
+            const depsSelect = document.getElementById('wbsDependencies');
+            const dependencies = Array.from(depsSelect.selectedOptions).map(o => o.value);
+
+            if (!code || !name) {
+                showToast('WBSコードと名称は必須です', 'error');
+                return;
+            }
+
+            const wbs = {
+                id: state.editingWbsId || `wbs_${Date.now()}`,
+                code,
+                name,
+                type,
+                parentCode: parentCode || null,
+                level: parentCode ? parentCode.split('.').length : 0,
+                assignee,
+                plannedStart: startDate || null,
+                plannedEnd: endDate || null,
+                plannedEffort: effort,
+                actualEffort: 0,
+                progress,
+                progressCalcMethod: 'manual',
+                milestone,
+                dependencies,
+                status: progress === 100 ? 'completed' : progress > 0 ? 'in-progress' : 'not-started',
+                note,
+                createdAt: state.editingWbsId ? state.wbsItems.find(w => w.id === state.editingWbsId)?.createdAt : new Date().toISOString(),
+                createdBy: state.editingWbsId ? state.wbsItems.find(w => w.id === state.editingWbsId)?.createdBy : document.getElementById('userName').value.trim(),
+                updatedAt: new Date().toISOString(),
+                updatedBy: document.getElementById('userName').value.trim()
+            };
+
+            // コードが変更された場合、カスケード更新を実行
+            const oldWbs = state.editingWbsId ? state.wbsItems.find(w => w.id === state.editingWbsId) : null;
+            if (oldWbs && oldWbs.code !== code) {
+                await cascadeUpdateCodes(oldWbs.code, code);
+            }
+
+            await saveWbs(wbs);
+            closeWbsModal();
+            await loadWbsItems();
+            updateSummary();
+            renderWbsTree();
+        }
+
+        async function handleDeleteWbs(wbsId) {
+            if (!confirm('このWBSを削除しますか？')) return;
+            await deleteWbs(wbsId);
+            await loadWbsItems();
+            updateSummary();
+            renderWbsTree();
+        }
+
+        async function cascadeUpdateCodes(oldCode, newCode) {
+            const updates = [];
+
+            // 全アイテムをスキャンして更新が必要なアイテムを特定
+            for (const item of state.wbsItems) {
+                // 編集中のアイテム自体は saveWbs で保存されるのでスキップ
+                if (item.id === state.editingWbsId) continue;
+
+                let modified = false;
+                let itemCode = item.code;
+                let itemParentCode = item.parentCode;
+                let itemDependencies = [...(item.dependencies || [])];
+
+                // 1. 子孫コードの更新
+                if (item.code.startsWith(oldCode + '.')) {
+                    itemCode = newCode + item.code.substring(oldCode.length);
+                    modified = true;
+                }
+
+                // 2. 親コード参照の更新
+                if (item.parentCode === oldCode) {
+                    itemParentCode = newCode;
+                    modified = true;
+                } else if (item.parentCode && item.parentCode.startsWith(oldCode + '.')) {
+                    itemParentCode = newCode + item.parentCode.substring(oldCode.length);
+                    modified = true;
+                }
+
+                // 3. 依存関係の更新
+                const newDeps = itemDependencies.map(dep => {
+                    if (dep === oldCode) return newCode;
+                    if (dep.startsWith(oldCode + '.')) {
+                        return newCode + dep.substring(oldCode.length);
+                    }
+                    return dep;
+                });
+
+                if (JSON.stringify(newDeps) !== JSON.stringify(itemDependencies)) {
+                    itemDependencies = newDeps;
+                    modified = true;
+                }
+
+                if (modified) {
+                    updates.push({
+                        ...item,
+                        code: itemCode,
+                        parentCode: itemParentCode,
+                        dependencies: itemDependencies,
+                        updatedAt: new Date().toISOString()
+                    });
+                }
+            }
+
+            // 更新を実行
+            for (const item of updates) {
+                await saveWbs(item);
+            }
+
+            if (updates.length > 0) {
+                showToast(`${updates.length}件の関連WBSを更新しました`, 'info');
+            }
+        }
+
+        // UI Helpers
+        function toggleNode(code) {
+            if (state.expandedNodes.has(code)) {
+                state.expandedNodes.delete(code);
+            } else {
+                state.expandedNodes.add(code);
+            }
+            renderWbsTree();
+        }
+
+        function expandAll() {
+            state.wbsItems.forEach(w => state.expandedNodes.add(w.code));
+            renderWbsTree();
+        }
+
+        function collapseAll() {
+            state.expandedNodes.clear();
+            renderWbsTree();
+        }
+
+        function switchView(view) {
+            updateState({ currentView: view });
+            document.querySelectorAll('.view-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.view === view);
+            });
+            document.getElementById('treeView').style.display = view === 'tree' ? 'block' : 'none';
+            document.getElementById('ganttView').style.display = view === 'gantt' ? 'block' : 'none';
+            if (view === 'gantt') renderGanttChart();
+        }
+
+        function updateSummary() {
+            const total = state.wbsItems.length;
+            const completed = state.wbsItems.filter(w => w.status === 'completed').length;
+            const delayed = state.wbsItems.filter(w => {
+                return w.plannedEnd && new Date(w.plannedEnd) < new Date() && w.status !== 'completed';
+            }).length;
+
+            const totalEffort = state.wbsItems.reduce((sum, w) => sum + (w.plannedEffort || 1), 0);
+            const weightedProgress = state.wbsItems.reduce((sum, w) => {
+                return sum + (w.plannedEffort || 1) * (w.progress || 0);
+            }, 0);
+            const avgProgress = totalEffort > 0 ? Math.round(weightedProgress / totalEffort) : 0;
+
+            document.getElementById('totalProgress').textContent = `${avgProgress}%`;
+            document.getElementById('totalItems').textContent = total;
+            document.getElementById('delayedItems').textContent = delayed;
+            document.getElementById('completedItems').textContent = completed;
+        }
+
+        function updateConnectionStatus(connected) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            if (dot) dot.classList.toggle('connected', connected);
+            if (text) text.textContent = connected ? '接続中' : '未接続';
+        }
+
+        function startAutoReload() {
+            if (state.autoReloadInterval) clearInterval(state.autoReloadInterval);
+            updateState({ autoReloadInterval: setInterval(reloadData, 60000) });
+        }
+
+        async function reloadData() {
+            if (!state.directoryHandle || !state.currentProject) return;
+            await loadWbsItems();
+            updateSummary();
+            renderWbsTree();
+            showToast('データを更新しました', 'info');
+        }
+
+        function saveUserName() {
+            const userName = document.getElementById('userName').value.trim();
+            if (userName) localStorage.setItem('wbs_userName', userName);
+        }
+
+        // Modal Helpers
+        function getNextTopCode() {
+            if (state.wbsItems.length === 0) return '1';
+            // 全アイテムのコードの最初の数値部分を抽出して最大値を探す
+            const allFirstParts = state.wbsItems.map(w => {
+                const firstPart = w.code.split('.')[0];
+                return parseInt(firstPart);
+            }).filter(n => !isNaN(n));
+
+            const maxCode = allFirstParts.length > 0 ? Math.max(...allFirstParts) : 0;
+            return String(maxCode + 1);
+        }
+
+        function getNextChildCode(parentCode) {
+            const children = state.wbsItems.filter(w => w.parentCode === parentCode);
+            if (children.length === 0) return `${parentCode}.1`;
+
+            // 子要素の最後のセグメント数値を抽出して最大値を求める
+            const suffixes = children.map(w => {
+                const parts = w.code.split('.');
+                const last = parseInt(parts[parts.length - 1]);
+                return isNaN(last) ? 0 : last;
+            });
+
+            const maxChild = Math.max(0, ...suffixes);
+            return `${parentCode}.${maxChild + 1}`;
+        }
+
+        function updateParentSelect(selectedCode = null) {
+            const select = document.getElementById('wbsParent');
+            if (!select) return;
+            select.innerHTML = '<option value="">なし（最上位）</option>';
+            state.wbsItems.forEach(w => {
+                if (state.editingWbsId && (w.id === state.editingWbsId || isDescendant(w.code, state.wbsItems.find(item => item.id === state.editingWbsId)?.code))) return;
+                const option = document.createElement('option');
+                option.value = w.code;
+                option.textContent = `${w.code} ${w.name}`;
+                if (w.code === selectedCode) option.selected = true;
+                select.appendChild(option);
+            });
+        }
+
+        function updateDependenciesSelect(selectedDeps = []) {
+            const select = document.getElementById('wbsDependencies');
+            if (!select) return;
+            select.innerHTML = '';
+            state.wbsItems.forEach(w => {
+                if (state.editingWbsId && w.id === state.editingWbsId) return;
+                const option = document.createElement('option');
+                option.value = w.code;
+                option.textContent = `${w.code} ${w.name}`;
+                if (selectedDeps.includes(w.code)) option.selected = true;
+                select.appendChild(option);
+            });
+        }
+
+        function isDescendant(childCode, parentCode) {
+            if (!parentCode) return false;
+            return childCode.startsWith(parentCode + '.');
+        }
+
+        // Context Menu
+        function showContextMenu(event, wbsId) {
+            event.preventDefault();
+            updateState({ contextMenuTarget: wbsId });
+            const menu = document.getElementById('contextMenu');
+            menu.style.left = event.pageX + 'px';
+            menu.style.top = event.pageY + 'px';
+            menu.classList.add('show');
+        }
+
+        function contextMenuAction(action) {
+            if (!state.contextMenuTarget) return;
+            const wbs = state.wbsItems.find(w => w.id === state.contextMenuTarget);
+            switch (action) {
+                case 'edit': showEditWbsModal(state.contextMenuTarget); break;
+                case 'addChild': showAddWbsModal(wbs?.code); break;
+                case 'duplicate': duplicateWbs(state.contextMenuTarget); break;
+                case 'delete': handleDeleteWbs(state.contextMenuTarget); break;
+            }
+            document.getElementById('contextMenu').classList.remove('show');
+            updateState({ contextMenuTarget: null });
+        }
+
+        async function duplicateWbs(wbsId) {
+            const original = state.wbsItems.find(w => w.id === wbsId);
+            if (!original) return;
+            const newCode = original.parentCode ? getNextChildCode(original.parentCode) : getNextTopCode();
+            const now = new Date().toISOString();
+            const userName = document.getElementById('userName').value.trim();
+            const newWbs = {
+                ...original,
+                id: `wbs_${Date.now()}`,
+                code: newCode,
+                name: `${original.name} (コピー)`,
+                progress: 0,
+                status: 'not-started',
+                createdAt: now,
+                createdBy: userName,
+                updatedAt: now,
+                updatedBy: userName
+            };
+            await saveWbs(newWbs);
+            await loadWbsItems();
+            updateSummary();
+            renderWbsTree();
+        }
+
+        // Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedUserName = localStorage.getItem('wbs_userName');
+            if (savedUserName) {
+                const setupUser = document.getElementById('setupUserName');
+                const mainUser = document.getElementById('userName');
+                if (setupUser) setupUser.value = savedUserName;
+                if (mainUser) mainUser.value = savedUserName;
+            }
+            document.addEventListener('click', () => {
+                const menu = document.getElementById('contextMenu');
+                if (menu) menu.classList.remove('show');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeWbsModal();
+                    closeProjectModal();
+                }
+            });
+        });
+
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WBS Manager</title>
+    <link rel="stylesheet" href="/src/styles/main.css">
+</head>
+
+<body>
+    <!-- Initial Setup Screen -->
+    <div id="setupScreen" class="setup-container">
+        <div class="setup-icon">📊</div>
+        <h1 class="setup-title">WBS Manager</h1>
+        <p class="setup-desc">プロジェクトのWBS管理を始めましょう</p>
+
+        <div class="setup-steps">
+            <div class="setup-step">
+                <span class="setup-step-num">1</span>
+                <span>共有フォルダ内にプロジェクト用フォルダを作成</span>
+            </div>
+            <div class="setup-step">
+                <span class="setup-step-num">2</span>
+                <span>下のボタンでフォルダを選択</span>
+            </div>
+            <div class="setup-step">
+                <span class="setup-step-num">3</span>
+                <span>ユーザー名を入力してスタート</span>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px; text-align: left;">
+            <label class="form-label required">ユーザー名</label>
+            <input type="text" id="setupUserName" class="form-input" placeholder="例：山田太郎">
+        </div>
+
+        <button class="btn btn-primary" onclick="window.app.selectProjectFolder()" style="width: 100%;">
+            📁 プロジェクトフォルダを開く
+        </button>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" style="display: none;">
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <div class="logo-icon">📊</div>
+                    WBS Manager
+                </div>
+                <div class="project-selector">
+                    <select id="projectSelect" onchange="window.app.switchProject()">
+                        <option value="">プロジェクトを選択</option>
+                    </select>
+                    <button class="btn btn-secondary btn-small" onclick="window.app.showNewProjectModal()">+ 新規</button>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="connection-status">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">未接続</span>
+                </div>
+                <button class="btn-icon" onclick="window.app.reloadData()" title="再読み込み">🔄</button>
+                <input type="text" class="user-name" id="userName" placeholder="ユーザー名"
+                    onchange="window.app.saveUserName()">
+                <button class="btn btn-secondary btn-small" onclick="window.app.selectProjectFolder()">📁
+                    フォルダ変更</button>
+            </div>
+        </header>
+
+        <div class="main-container">
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-title">サマリー</div>
+                    <div class="summary-cards">
+                        <div class="summary-card progress">
+                            <div class="value" id="totalProgress">0%</div>
+                            <div class="label">全体進捗</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="value" id="totalItems">0</div>
+                            <div class="label">WBS項目</div>
+                        </div>
+                        <div class="summary-card delayed">
+                            <div class="value" id="delayedItems">0</div>
+                            <div class="label">遅延</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="value" id="completedItems">0</div>
+                            <div class="label">完了</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-tabs">
+                    <button class="view-tab active" data-view="tree" onclick="window.app.switchView('tree')">📋
+                        ツリー</button>
+                    <button class="view-tab" data-view="gantt" onclick="window.app.switchView('gantt')">📊 ガント</button>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-title">凡例</div>
+                    <div class="legend-items">
+                        <div class="legend-item">
+                            <div class="legend-color deliverable"></div>
+                            <span>成果物</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color support"></div>
+                            <span>運用・サポート</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color buffer"></div>
+                            <span>バッファ</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color milestone"></div>
+                            <span>マイルストーン</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="content">
+                <div class="toolbar">
+                    <div class="toolbar-left">
+                        <button class="btn btn-primary" onclick="window.app.showAddWbsModal()">+ WBS追加</button>
+                        <button class="btn btn-secondary" onclick="window.app.showAddWbsModal(null, 'support')">+
+                            運用枠追加</button>
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="btn btn-secondary btn-small" onclick="window.app.expandAll()">全展開</button>
+                        <button class="btn btn-secondary btn-small" onclick="window.app.collapseAll()">全折畳</button>
+                    </div>
+                </div>
+
+                <!-- Tree View -->
+                <div id="treeView" class="wbs-tree">
+                    <div class="wbs-header">
+                        <span>WBS名</span>
+                        <span>担当者</span>
+                        <span>ステータス</span>
+                        <span>期間</span>
+                        <span>進捗</span>
+                        <span>依存</span>
+                        <span></span>
+                    </div>
+                    <div class="wbs-list" id="wbsList">
+                        <div class="empty-state" id="emptyState">
+                            <div class="empty-state-icon">📋</div>
+                            <div class="empty-state-title">WBSがありません</div>
+                            <div class="empty-state-desc">「+ WBS追加」ボタンでWBSを作成してください</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gantt View -->
+                <div id="ganttView" class="gantt-container" style="display: none;">
+                    <div id="ganttChart"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Add/Edit WBS Modal -->
+    <div class="modal-overlay" id="wbsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="wbsModalTitle">WBS追加</h2>
+                <button class="modal-close" onclick="window.app.closeWbsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label required">WBSコード</label>
+                        <input type="text" id="wbsCode" class="form-input" placeholder="例: 1.1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required">種別</label>
+                        <select id="wbsType" class="form-select">
+                            <option value="deliverable">成果物</option>
+                            <option value="support">運用・サポート</option>
+                            <option value="buffer">バッファ</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">名称</label>
+                    <input type="text" id="wbsName" class="form-input" placeholder="例: 要件定義">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">親WBSコード</label>
+                        <select id="wbsParent" class="form-select">
+                            <option value="">なし（最上位）</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">担当者</label>
+                        <input type="text" id="wbsAssignee" class="form-input" placeholder="例: 山田">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">予定開始日</label>
+                        <input type="date" id="wbsStartDate" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">予定終了日</label>
+                        <input type="date" id="wbsEndDate" class="form-input">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">予定工数（人日）</label>
+                        <input type="number" id="wbsEffort" class="form-input" placeholder="例: 5" min="0" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">進捗（%）</label>
+                        <input type="number" id="wbsProgress" class="form-input" placeholder="0" min="0" max="100">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">依存関係（先行WBS）</label>
+                    <select id="wbsDependencies" class="form-select" multiple style="height: 80px;">
+                    </select>
+                    <small style="color: var(--text-secondary); font-size: 11px;">Ctrl+クリックで複数選択</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" id="wbsMilestone">
+                        <span>マイルストーンとして表示</span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">メモ</label>
+                    <textarea id="wbsNote" class="form-textarea" placeholder="備考やメモを入力"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="window.app.closeWbsModal()">キャンセル</button>
+                <button class="btn btn-primary" onclick="window.app.saveWbs()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Project Modal -->
+    <div class="modal-overlay" id="projectModal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">新規プロジェクト</h2>
+                <button class="modal-close" onclick="window.app.closeProjectModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label required">プロジェクトID</label>
+                    <input type="text" id="projectId" class="form-input" placeholder="例: project_2024">
+                    <small style="color: var(--text-secondary); font-size: 11px;">英数字とアンダースコアのみ</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label required">プロジェクト名</label>
+                    <input type="text" id="projectName" class="form-input" placeholder="例: 新規システム開発">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">説明</label>
+                    <textarea id="projectDesc" class="form-textarea" placeholder="プロジェクトの概要"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="window.app.closeProjectModal()">キャンセル</button>
+                <button class="btn btn-primary" onclick="window.app.createProject()">作成</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" onclick="window.app.contextMenuAction('edit')">✏️ 編集</div>
+        <div class="context-menu-item" onclick="window.app.contextMenuAction('addChild')">➕ 子WBS追加</div>
+        <div class="context-menu-item" onclick="window.app.contextMenuAction('duplicate')">📋 複製</div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item danger" onclick="window.app.contextMenuAction('delete')">🗑️ 削除</div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>

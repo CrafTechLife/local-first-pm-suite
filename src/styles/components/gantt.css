@@ -1,0 +1,132 @@
+/* Gantt Chart */
+.gantt-container {
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.gantt-header {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.gantt-labels {
+    width: 250px;
+    flex-shrink: 0;
+    background: var(--bg-tertiary);
+}
+
+.gantt-timeline {
+    flex: 1;
+    overflow-x: auto;
+}
+
+.gantt-dates {
+    display: flex;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.gantt-date {
+    min-width: 40px;
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 10px;
+    color: var(--text-secondary);
+    border-right: 1px solid var(--border-color);
+}
+
+.gantt-date.weekend {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.gantt-date.today {
+    background: rgba(29, 155, 240, 0.2);
+    color: var(--accent-blue);
+}
+
+.gantt-rows {
+    display: flex;
+}
+
+.gantt-row-labels {
+    width: 250px;
+    flex-shrink: 0;
+}
+
+.gantt-row-label {
+    height: 36px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.gantt-row-bars {
+    flex: 1;
+}
+
+.gantt-row {
+    height: 36px;
+    position: relative;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.gantt-bar {
+    position: absolute;
+    top: 6px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    font-size: 11px;
+    color: white;
+    cursor: pointer;
+    transition: filter 0.15s;
+}
+
+.gantt-bar:hover {
+    filter: brightness(1.1);
+}
+
+.gantt-bar.deliverable {
+    background: var(--accent-blue);
+}
+
+.gantt-bar.support {
+    background: var(--accent-orange);
+}
+
+.gantt-bar.buffer {
+    background: var(--accent-purple);
+}
+
+.gantt-bar .progress-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px 0 0 4px;
+}
+
+.gantt-milestone {
+    position: absolute;
+    top: 10px;
+    width: 16px;
+    height: 16px;
+    background: var(--accent-yellow);
+    transform: rotate(45deg);
+    cursor: pointer;
+}
+
+.gantt-dependency-line {
+    position: absolute;
+    pointer-events: none;
+}
