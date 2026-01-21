@@ -1,7 +1,7 @@
 # Roadmap
 
 WBS Manager (Local First PM Suite) の開発ロードマップです。
-詳細な仕様は [docs/仕様書.md](docs/仕様書.md) を参照してください。
+詳細な仕様は [specs/](specs/) を参照してください。
 
 ## Phase 1: WBS管理基盤 (MVP)
 - [x] **WBSツリー表示・編集**
