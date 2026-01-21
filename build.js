@@ -43,9 +43,15 @@ async function build() {
     for (const file of jsFiles) {
         let content = fs.readFileSync(path.join(SRC_DIR, file), 'utf8');
         // ESMキーワードの除去（ブラウザでの直接動作のため）
-        content = content.replace(/export\s+const\s+/g, 'const ')
+        content = content
+            .replace(/export\s+const\s+/g, 'const ')
+            .replace(/export\s+let\s+/g, 'let ')
+            .replace(/export\s+var\s+/g, 'var ')
             .replace(/export\s+function\s+/g, 'function ')
-            .replace(/export\s+module\s+/g, 'module ') // Just in case
+            .replace(/export\s+async\s+function\s+/g, 'async function ')
+            .replace(/export\s+class\s+/g, 'class ')
+            .replace(/export\s+default\s+/g, ' ')
+            .replace(/export\s+\{[\s\S]*?\}\s*(?:from\s+['"].*?['"])?;?/g, '') // Remove named exports and re-exports
             .replace(/import\s+[\s\S]*?from\s+['"].*?['"];?/g, '');
         combinedJs += `\n/* --- ${file} --- */\n` + content + '\n';
     }

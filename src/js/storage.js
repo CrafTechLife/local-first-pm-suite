@@ -42,10 +42,99 @@ export async function loadProjects() {
     }
 }
 
+
+export async function loadMasterData() {
+    if (!state.currentProject) return;
+
+    try {
+        const projectDir = await state.directoryHandle.getDirectoryHandle(state.currentProject.id);
+
+        // Load Categories
+        try {
+            const file = await projectDir.getFileHandle('categories.json');
+            const content = await (await file.getFile()).text();
+            updateState({ categories: JSON.parse(content) });
+        } catch (e) {
+            updateState({ categories: [] });
+        }
+
+        // Load Members
+        try {
+            const file = await projectDir.getFileHandle('members.json');
+            const content = await (await file.getFile()).text();
+            updateState({ members: JSON.parse(content) });
+        } catch (e) {
+            updateState({ members: [] });
+        }
+
+        // Load Milestones
+        try {
+            const file = await projectDir.getFileHandle('milestones.json');
+            const content = await (await file.getFile()).text();
+            updateState({ milestones: JSON.parse(content) });
+        } catch (e) {
+            updateState({ milestones: [] });
+        }
+
+    } catch (err) {
+        console.error('Load Master Data error:', err);
+        // showToast('マスタデータの読み込みに失敗しました', 'error'); // Optional: quiet fail if files don't exist yet
+    }
+}
+
+export async function saveCategories(categories) {
+    try {
+        const projectDir = await state.directoryHandle.getDirectoryHandle(state.currentProject.id);
+        const fileHandle = await projectDir.getFileHandle('categories.json', { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(JSON.stringify(categories, null, 2));
+        await writable.close();
+        updateState({ categories });
+    } catch (err) {
+        console.error('Save Categories error:', err);
+        showToast('カテゴリの保存に失敗しました', 'error');
+        throw err;
+    }
+}
+
+export async function saveMembers(members) {
+    try {
+        const projectDir = await state.directoryHandle.getDirectoryHandle(state.currentProject.id);
+        const fileHandle = await projectDir.getFileHandle('members.json', { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(JSON.stringify(members, null, 2));
+        await writable.close();
+        updateState({ members });
+    } catch (err) {
+        console.error('Save Members error:', err);
+        showToast('メンバーの保存に失敗しました', 'error');
+        throw err;
+    }
+}
+
+export async function saveMilestones(milestones) {
+    try {
+        const projectDir = await state.directoryHandle.getDirectoryHandle(state.currentProject.id);
+        const fileHandle = await projectDir.getFileHandle('milestones.json', { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(JSON.stringify(milestones, null, 2));
+        await writable.close();
+        updateState({ milestones });
+    } catch (err) {
+        console.error('Save Milestones error:', err);
+        showToast('マイルストーンの保存に失敗しました', 'error');
+        throw err;
+    }
+}
+
 export async function loadWbsItems() {
     if (!state.currentProject) return [];
 
+    // Load Master Data as well
+    await loadMasterData();
+
     const wbsItems = [];
+
     try {
         const projectDir = await state.directoryHandle.getDirectoryHandle(state.currentProject.id);
         const wbsDir = await projectDir.getDirectoryHandle('wbs');

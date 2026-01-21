@@ -14,28 +14,64 @@ import {
     closeProjectModal,
     showAddWbsModal,
     showEditWbsModal,
-    closeWbsModal
+    closeWbsModal,
+    showCategoryModal,
+    closeCategoryModal,
+    saveCategory,
+    deleteCategory,
+    showMemberModal,
+    closeMemberModal,
+    saveMember,
+    deleteMember,
+    showMilestoneModal,
+    closeMilestoneModal,
+    saveMilestone,
+    deleteMilestone
 } from './js/ui/modals.js';
 import { showToast } from './js/utils/dom.js';
+
+// Imports are removed by build.js, so we rely on global functions defined in previous files.
+// selectProjectFolder is defined in js/storage.js
 
 // Global Exposure for HTML Event Handlers
 window.app = {
     selectProjectFolder: async () => {
-        await selectProjectFolder();
-        const userName = document.getElementById('setupUserName').value.trim() ||
-            document.getElementById('userName').value.trim();
-        if (!userName) {
-            showToast('ユーザー名を入力してください', 'error');
-            return;
+        console.log('Starting selectProjectFolder...');
+        try {
+            // function selectProjectFolder() is global from storage.js
+            await selectProjectFolder();
+            console.log('Folder selected successfully.');
+
+            const userName = document.getElementById('setupUserName').value.trim() ||
+                document.getElementById('userName').value.trim();
+
+            if (!userName) {
+                console.log('Username is empty.');
+                showToast('ユーザー名を入力してください', 'error');
+                return;
+            }
+
+            console.log('Setting up user:', userName);
+            localStorage.setItem('wbs_userName', userName);
+            document.getElementById('userName').value = userName;
+
+            console.log('Switching to main app view...');
+            document.getElementById('setupScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            updateConnectionStatus(true);
+
+            console.log('Loading projects list...');
+            await loadProjectsList();
+            startAutoReload();
+            showToast('フォルダに接続しました', 'success');
+        } catch (err) {
+            if (err.name === 'AbortError') {
+                console.log('Folder selection cancelled by user.');
+                return;
+            }
+            console.error('Setup error:', err);
+            showToast('エラーが発生しました: ' + err.message, 'error');
         }
-        localStorage.setItem('wbs_userName', userName);
-        document.getElementById('userName').value = userName;
-        document.getElementById('setupScreen').style.display = 'none';
-        document.getElementById('mainApp').style.display = 'block';
-        updateConnectionStatus(true);
-        await loadProjectsList();
-        startAutoReload();
-        showToast('フォルダに接続しました', 'success');
     },
     switchProject,
     showNewProjectModal,
@@ -58,7 +94,25 @@ window.app = {
     getNextTopCode,
     getNextChildCode,
     updateParentSelect,
-    updateDependenciesSelect
+    updateDependenciesSelect,
+    updateCategorySelect,
+    // Category Modal
+    showCategoryModal,
+    closeCategoryModal,
+    saveCategory,
+    saveCategory,
+    deleteCategory,
+    // Member Modal
+    showMemberModal,
+    closeMemberModal,
+    saveMember,
+    deleteMember,
+    updateMemberSelect,
+    // Milestone Modal
+    showMilestoneModal,
+    closeMilestoneModal,
+    saveMilestone,
+    deleteMilestone
 };
 
 async function loadProjectsList() {
@@ -127,6 +181,7 @@ async function handleCreateProject() {
 async function handleSaveWbs() {
     const code = document.getElementById('wbsCode').value.trim();
     const name = document.getElementById('wbsName').value.trim();
+    const categoryId = document.getElementById('wbsCategory').value;
     const type = document.getElementById('wbsType').value;
     const parentCode = document.getElementById('wbsParent').value;
     const assignee = document.getElementById('wbsAssignee').value.trim();
@@ -146,9 +201,10 @@ async function handleSaveWbs() {
     }
 
     const wbs = {
-        id: state.editingWbsId || `wbs_${Date.now()}`,
+        id: state.editingWbsId || ('wbs_' + Date.now()),
         code,
         name,
+        categoryId,
         type,
         parentCode: parentCode || null,
         level: parentCode ? parentCode.split('.').length : 0,
@@ -227,7 +283,7 @@ function updateSummary() {
     }, 0);
     const avgProgress = totalEffort > 0 ? Math.round(weightedProgress / totalEffort) : 0;
 
-    document.getElementById('totalProgress').textContent = `${avgProgress}%`;
+    document.getElementById('totalProgress').textContent = `${avgProgress}% `;
     document.getElementById('totalItems').textContent = total;
     document.getElementById('delayedItems').textContent = delayed;
     document.getElementById('completedItems').textContent = completed;
@@ -268,12 +324,12 @@ function getNextTopCode() {
 
 function getNextChildCode(parentCode) {
     const children = state.wbsItems.filter(w => w.parentCode === parentCode);
-    if (children.length === 0) return `${parentCode}.1`;
+    if (children.length === 0) return `${parentCode} .1`;
     const maxChild = Math.max(...children.map(w => {
         const parts = w.code.split('.');
         return parseInt(parts[parts.length - 1]);
     }));
-    return `${parentCode}.${maxChild + 1}`;
+    return `${parentCode}.${maxChild + 1} `;
 }
 
 function updateParentSelect(selectedCode = null) {
@@ -284,7 +340,7 @@ function updateParentSelect(selectedCode = null) {
         if (state.editingWbsId && (w.id === state.editingWbsId || isDescendant(w.code, state.wbsItems.find(item => item.id === state.editingWbsId)?.code))) return;
         const option = document.createElement('option');
         option.value = w.code;
-        option.textContent = `${w.code} ${w.name}`;
+        option.textContent = `${w.code} ${w.name} `;
         if (w.code === selectedCode) option.selected = true;
         select.appendChild(option);
     });
@@ -298,7 +354,7 @@ function updateDependenciesSelect(selectedDeps = []) {
         if (state.editingWbsId && w.id === state.editingWbsId) return;
         const option = document.createElement('option');
         option.value = w.code;
-        option.textContent = `${w.code} ${w.name}`;
+        option.textContent = `${w.code} ${w.name} `;
         if (selectedDeps.includes(w.code)) option.selected = true;
         select.appendChild(option);
     });
@@ -307,6 +363,46 @@ function updateDependenciesSelect(selectedDeps = []) {
 function isDescendant(childCode, parentCode) {
     if (!parentCode) return false;
     return childCode.startsWith(parentCode + '.');
+}
+
+function updateCategorySelect(selectedCategoryId = null) {
+    const select = document.getElementById('wbsCategory');
+    if (!select) return;
+    select.innerHTML = '<option value="">(選択なし)</option>';
+    state.categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat.id;
+        option.textContent = cat.name;
+        option.style.borderLeft = `4px solid ${cat.color} `;
+        if (cat.id === selectedCategoryId) option.selected = true;
+        select.appendChild(option);
+    });
+}
+
+function updateMemberSelect(selectedAssignee = null) {
+    const select = document.getElementById('wbsAssignee');
+    if (!select) return;
+    select.innerHTML = '<option value="">(未定)</option>';
+
+    // 登録済みメンバーを追加
+    state.members.forEach(mem => {
+        const option = document.createElement('option');
+        option.value = mem.name; // ここでは名前をValueとする（既存データとの互換性のため）
+        // 将来的にはIDにするべきだが、既存データが名前で入っているため、まずは名前でマッチングさせる
+
+        option.textContent = mem.name + (mem.role ? ` (${mem.role})` : '');
+        if (mem.name === selectedAssignee) option.selected = true;
+        select.appendChild(option);
+    });
+
+    // 既存データにあるがメンバーリストにない場合（自由入力された過去データなど）、一時的に追加
+    if (selectedAssignee && !state.members.find(m => m.name === selectedAssignee)) {
+        const option = document.createElement('option');
+        option.value = selectedAssignee;
+        option.textContent = selectedAssignee + ' (未登録)';
+        option.selected = true;
+        select.appendChild(option);
+    }
 }
 
 // Context Menu
@@ -340,7 +436,7 @@ async function duplicateWbs(wbsId) {
     const userName = document.getElementById('userName').value.trim();
     const newWbs = {
         ...original,
-        id: `wbs_${Date.now()}`,
+        id: `wbs_${Date.now()} `,
         code: newCode,
         name: `${original.name} (コピー)`,
         progress: 0,

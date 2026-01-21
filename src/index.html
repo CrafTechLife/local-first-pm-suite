@@ -61,6 +61,9 @@
                     <span id="statusText">未接続</span>
                 </div>
                 <button class="btn-icon" onclick="window.app.reloadData()" title="再読み込み">🔄</button>
+                <button class="btn btn-secondary btn-small" onclick="window.app.showCategoryModal()">カテゴリ管理</button>
+                <button class="btn btn-secondary btn-small" onclick="window.app.showMemberModal()">メンバー管理</button>
+                <button class="btn btn-secondary btn-small" onclick="window.app.showMilestoneModal()">マイルストーン管理</button>
                 <input type="text" class="user-name" id="userName" placeholder="ユーザー名"
                     onchange="window.app.saveUserName()">
                 <button class="btn btn-secondary btn-small" onclick="window.app.selectProjectFolder()">📁
@@ -162,6 +165,112 @@
         </div>
     </div>
 
+    <!-- Category Modal -->
+    <div id="categoryModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">カテゴリ管理</div>
+                <button class="modal-close" onclick="window.app.closeCategoryModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row" style="margin-bottom: 20px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label required">カテゴリ名</label>
+                        <input type="text" id="catName" class="form-input" placeholder="例: 開発, デザイン">
+                    </div>
+                    <div class="form-group" style="width: 100px;">
+                        <label class="form-label">色</label>
+                        <input type="color" id="catColor" class="form-input" value="#1d9bf0" style="height: 42px;">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-primary" onclick="window.app.saveCategory()">追加</button>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid var(--border-color); margin: 20px 0;"></div>
+
+                <div id="categoryList" class="wbs-list">
+                    <!-- Categories will be rendered here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="window.app.closeCategoryModal()">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Member Modal -->
+    <div id="memberModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">メンバー管理</div>
+                <button class="modal-close" onclick="window.app.closeMemberModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row" style="margin-bottom: 20px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label required">名前</label>
+                        <input type="text" id="memName" class="form-input" placeholder="例: 山田">
+                    </div>
+                    <div class="form-group" style="width: 120px;">
+                        <label class="form-label">役割</label>
+                        <input type="text" id="memRole" class="form-input" placeholder="例: Dev">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-primary" onclick="window.app.saveMember()">追加</button>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid var(--border-color); margin: 20px 0;"></div>
+
+                <div id="memberList" class="wbs-list">
+                    <!-- Members will be rendered here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="window.app.closeMemberModal()">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Milestone Modal -->
+    <div id="milestoneModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">マイルストーン管理</div>
+                <button class="modal-close" onclick="window.app.closeMilestoneModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row" style="margin-bottom: 20px;">
+                    <div class="form-group" style="flex: 2;">
+                        <label class="form-label required">マイルストーン名</label>
+                        <input type="text" id="milName" class="form-input" placeholder="例: α版リリース">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label required">日付</label>
+                        <input type="date" id="milDate" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">説明</label>
+                    <input type="text" id="milDesc" class="form-input" placeholder="任意">
+                </div>
+                <div class="form-group" style="display: flex; justify-content: flex-end;">
+                    <button class="btn btn-primary" onclick="window.app.saveMilestone()">追加</button>
+                </div>
+
+                <div style="border-top: 1px solid var(--border-color); margin: 20px 0;"></div>
+
+                <div id="milestoneList" class="wbs-list">
+                    <!-- Milestones will be rendered here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="window.app.closeMilestoneModal()">閉じる</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Add/Edit WBS Modal -->
     <div class="modal-overlay" id="wbsModal">
         <div class="modal">
@@ -189,6 +298,12 @@
                     <label class="form-label required">名称</label>
                     <input type="text" id="wbsName" class="form-input" placeholder="例: 要件定義">
                 </div>
+                <div class="form-group">
+                    <label class="form-label">カテゴリ</label>
+                    <select id="wbsCategory" class="form-select">
+                        <option value="">(選択なし)</option>
+                    </select>
+                </div>
 
                 <div class="form-row">
                     <div class="form-group">
@@ -199,7 +314,9 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">担当者</label>
-                        <input type="text" id="wbsAssignee" class="form-input" placeholder="例: 山田">
+                        <select id="wbsAssignee" class="form-select">
+                            <option value="">(未定)</option>
+                        </select>
                     </div>
                 </div>
 
